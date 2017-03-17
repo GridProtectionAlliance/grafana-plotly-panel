@@ -16,9 +16,9 @@
   ],
   "author": "ryantxu",
   "license": "MIT",
-  "repository" : { 
-    "type" : "git", 
-    "url" : "https://github.com/NatelEnergy/grafana-plotly-panel.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NatelEnergy/grafana-plotly-panel.git"
   },
   "devDependencies": {
     "babel": "~6.5.1",
@@ -39,6 +39,7 @@
     "load-grunt-tasks": "~3.2.0"
   },
   "dependencies": {
+    "grunt-ts": "^6.0.0-beta.15",
     "lodash": "^4.17.2",
     "moment": "^2.12.0"
   }
