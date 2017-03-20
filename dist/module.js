@@ -255,24 +255,24 @@ System.register(['app/plugins/sdk', 'lodash', 'moment', 'angular', './external/p
                 }
               });
 
-              if (false) {
-                this.graph.on('plotly_hover', function (data, xxx) {
-                  console.log('HOVER!!!', data, xxx, _this2.mouse);
-                  if (data.points.length > 0) {
-                    var idx = 0;
-                    var pt = data.points[idx];
+              //if(false) {
+              this.graph.on('plotly_hover', function (data, xxx) {
+                console.log('HOVER!!!', data, xxx, _this2.mouse);
+                if (data.points.length > 0) {
+                  var idx = 0;
+                  var pt = data.points[idx];
 
-                    var body = '<div class="graph-tooltip-time">' + pt.pointNumber + '</div>';
-                    body += "<center>";
-                    body += pt.x + ', ' + pt.y;
-                    body += "</center>";
+                  var body = '<div class="graph-tooltip-time">' + pt.pointNumber + '</div>';
+                  body += "<center>";
+                  body += pt.x + ', ' + pt.y;
+                  body += "</center>";
 
-                    _this2.$tooltip.html(body).place_tt(_this2.mouse.pageX + 10, _this2.mouse.pageY);
-                  }
-                }).on('plotly_unhover', function (data) {
-                  _this2.$tooltip.detach();
-                });
-              }
+                  _this2.$tooltip.html(body).place_tt(_this2.mouse.pageX + 10, _this2.mouse.pageY);
+                }
+              }).on('plotly_unhover', function (data) {
+                _this2.$tooltip.detach();
+              });
+              //}
 
               this.graph.on('plotly_selected', function (data) {
 
@@ -326,72 +326,112 @@ System.register(['app/plugins/sdk', 'lodash', 'moment', 'angular', './external/p
         }, {
           key: 'onDataReceived',
           value: function onDataReceived(dataList) {
-            this.trace.x = [];
-            this.trace.y = [];
-            this.trace.z = [];
-            this.trace.ts = [];
+            if (this.panel.pconfig.settings.type == "Bar") {
+              var fields = [];
+              //var startDate = new Date(data.StartDate);
+              //var endDate = new Date(data.EndDate);
 
-            if (dataList.length < 2) {
-              console.log("No data", dataList);
+              $.each(dataList, function (i, d) {
+                fields.push({
+                  x: d.datapoints.map(function (a) {
+                    var now = new Date(a[1]);
+                    var utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+                    return utc;
+                  }),
+                  y: d.datapoints.map(function (a) {
+                    return a[0];
+                  }),
+                  name: d.target,
+                  //marker: {
+                  //    color: types.Color,
+                  //},
+                  type: 'bar'
+                });
+              });
+
+              var layout = {
+                title: val.slice(0, val.length - 1) + " Type by Date",
+                xaxis: {
+                  title: 'Date',
+                  type: 'date',
+                  tickFormat: Plotly.d3.time.format.utc("%m-%d")
+                },
+                yaxis: {
+                  title: val.slice(0, val.length - 1) + ' Counts',
+                  range: [0]
+                },
+                barmode: 'stack'
+              };
+              Plotly.Plotly.newPlot(this.graph, fields, this.layout, layout);
             } else {
-              //   console.log( "plotly data", dataList);
 
-              var cfg = this.panel.pconfig;
+              this.trace.x = [];
+              this.trace.y = [];
+              this.trace.z = [];
+              this.trace.ts = [];
 
-              var srcX = dataList[0].datapoints;
-              var srcY = dataList[1].datapoints;
-
-              if (srcX.length != srcY.length) {
-                throw "Metrics must have the same count! (x!=y)";
-              }
-
-              var srcZ = null;
-              if (cfg.settings.type == 'scatter3d') {
-                srcZ = dataList[2].datapoints;
-                if (srcZ.length != srcY.length) {
-                  throw "Metrics must have the same count! (z!=y)";
-                }
-                this.layout.scene.xaxis.title = dataList[0].target;
-                this.layout.scene.yaxis.title = dataList[1].target;
-                this.layout.scene.zaxis.title = dataList[2].target;
-
-                console.log("3D", this.layout);
+              if (dataList.length < 2) {
+                console.log("No data", dataList);
               } else {
-                this.layout.xaxis.title = dataList[0].target;
-                this.layout.yaxis.title = dataList[1].target;
-              }
+                //   console.log( "plotly data", dataList);
 
-              var srcColor = null;
-              if (cfg.settings.color_option == 'data') {
-                var is3d = cfg.settings.type == 'scatter3d';
-                if (dataList.length < (is3d ? 4 : 3)) {
-                  throw "Need extra metric for color!";
-                }
-                srcColor = dataList[is3d ? 3 : 2].datapoints;
-              }
+                var cfg = this.panel.pconfig;
 
-              this.trace.marker = $.extend(true, {}, cfg.settings.marker);
-              this.trace.line = $.extend(true, {}, cfg.settings.line);
-              if (cfg.settings.color_option == 'ramp' || cfg.settings.color_option == 'data') {
-                this.trace.marker.color = [];
-              }
+                var srcX = dataList[0].datapoints;
+                var srcY = dataList[1].datapoints;
 
-              var len = srcX.length;
-              for (var i = 0; i < len; i++) {
-                this.trace.ts.push(srcX[i][1]);
-                this.trace.x.push(srcX[i][0]);
-                this.trace.y.push(srcY[i][0]);
-                if (cfg.settings.color_option == 'ramp') {
-                  this.trace.marker.color.push(i);
-                } else if (srcColor) {
-                  this.trace.marker.color.push(srcColor[i][0]);
+                if (srcX.length != srcY.length) {
+                  throw "Metrics must have the same count! (x!=y)";
                 }
-                if (srcZ) {
-                  this.trace.z.push(srcZ[i][0]);
+
+                var srcZ = null;
+                if (cfg.settings.type == 'scatter3d') {
+                  srcZ = dataList[2].datapoints;
+                  if (srcZ.length != srcY.length) {
+                    throw "Metrics must have the same count! (z!=y)";
+                  }
+                  this.layout.scene.xaxis.title = dataList[0].target;
+                  this.layout.scene.yaxis.title = dataList[1].target;
+                  this.layout.scene.zaxis.title = dataList[2].target;
+
+                  console.log("3D", this.layout);
+                } else {
+                  this.layout.xaxis.title = dataList[0].target;
+                  this.layout.yaxis.title = dataList[1].target;
+                }
+
+                var srcColor = null;
+                if (cfg.settings.color_option == 'data') {
+                  var is3d = cfg.settings.type == 'scatter3d';
+                  if (dataList.length < (is3d ? 4 : 3)) {
+                    throw "Need extra metric for color!";
+                  }
+                  srcColor = dataList[is3d ? 3 : 2].datapoints;
+                }
+
+                this.trace.marker = $.extend(true, {}, cfg.settings.marker);
+                this.trace.line = $.extend(true, {}, cfg.settings.line);
+                if (cfg.settings.color_option == 'ramp' || cfg.settings.color_option == 'data') {
+                  this.trace.marker.color = [];
+                }
+
+                var len = srcX.length;
+                for (var i = 0; i < len; i++) {
+                  this.trace.ts.push(srcX[i][1]);
+                  this.trace.x.push(srcX[i][0]);
+                  this.trace.y.push(srcY[i][0]);
+                  if (cfg.settings.color_option == 'ramp') {
+                    this.trace.marker.color.push(i);
+                  } else if (srcColor) {
+                    this.trace.marker.color.push(srcColor[i][0]);
+                  }
+                  if (srcZ) {
+                    this.trace.z.push(srcZ[i][0]);
+                  }
                 }
               }
+              this.render();
             }
-            this.render();
           }
         }, {
           key: 'onConfigChanged',

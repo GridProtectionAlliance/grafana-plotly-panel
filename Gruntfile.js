@@ -7,14 +7,15 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
         clean: {
-            dist: ['dist']
+            dist: ['dist'],
+            options: { force: true }
         },
         copy: {
             src_to_dist: {
                 cwd: 'src',
                 expand: true,
-                src: ['**/*', '!**/*.js', '!**/External/*', '!**/*.ts', '!**/*.scss', '!img/*', "!docs/*"],
-                dest: 'dist'
+                src: ['**/*','src/*', '**/*.js',  '!**/*.ts', '!**/*.scss', '!img/*', "!docs/*"],
+                dest: 'dist/'
             },
             img_to_dist: {
                 cwd: 'src',
@@ -50,13 +51,14 @@ module.exports = function (grunt) {
                 options: {
                     plugins: ['transform-es2015-modules-systemjs', 'transform-es2015-for-of']
                 },
-                files: [{
-                    cwd: 'src',
-                    expand: true,
-                    src: ['**/*.js'],
-                    dest: 'dist',
-                    ext: '.js'
-                }]
+                files: {
+                    'dist/module.js': 'src/module.js'
+                    //cwd: 'src',
+                    //expand: true,
+                    //src: ['dist/module.js', 'src/module.js.map'],
+                    //dest: 'dist',
+                    //ext: '.js'
+                }
             }
         }
     })
